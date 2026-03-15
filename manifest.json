@@ -1,0 +1,12 @@
+{
+    "display_name": "GProxy Prompt Cache",
+    "loading_order": 25,
+    "requires": [],
+    "optional": [
+        "third-party/JS-Slash-Runner"
+    ],
+    "js": "index.js",
+    "author": "LeenHawk",
+    "version": "1.0.0",
+    "homePage": "https://github.com/LeenHawk/SillyTavern-GProxy-Prompt-Cache"
+}

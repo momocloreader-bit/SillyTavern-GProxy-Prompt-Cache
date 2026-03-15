@@ -1,0 +1,61 @@
+<div class="gproxy_prompt_cache_settings">
+    <div class="inline-drawer">
+        <div class="inline-drawer-toggle inline-drawer-header">
+            <b>GProxy Prompt Cache</b>
+            <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
+        </div>
+        <div class="inline-drawer-content">
+            <label class="checkbox_label" for="gproxy_prompt_cache_enabled">
+                <input id="gproxy_prompt_cache_enabled" type="checkbox" />
+                <span>Enable prompt rewrite on real sends</span>
+            </label>
+
+            <div class="marginTop10">
+                <label for="gproxy_prompt_cache_trigger">Cache trigger</label>
+                <select id="gproxy_prompt_cache_trigger" class="text_pole">
+                    <option value="auto">auto</option>
+                    <option value="5m">5m</option>
+                    <option value="1h">1h</option>
+                </select>
+            </div>
+
+            <div class="marginTop10">
+                <label for="gproxy_prompt_cache_summary_title">Summary heading</label>
+                <input id="gproxy_prompt_cache_summary_title" class="text_pole" type="text" maxlength="64" />
+            </div>
+
+            <div class="marginTop10">
+                <small>
+                    Assistant messages containing a matching
+                    <code>&lt;details&gt;&lt;summary&gt;...&lt;/summary&gt;&lt;/details&gt;</code>
+                    block are split deterministically:
+                    after 20 managed assistant turns, the oldest 10 keep only the summary block; the newest turns keep only body text.
+                </small>
+            </div>
+
+            <div class="marginTop10">
+                <small>
+                    Companion extension:
+                    <a href="https://github.com/N0VI028/JS-Slash-Runner" target="_blank" rel="noopener noreferrer">JS-Slash-Runner</a>
+                    can call <code>/gproxycache-status</code> and <code>/gproxycache-set</code>.
+                </small>
+            </div>
+
+            <div class="marginTop10">
+                <strong>Current chat</strong>
+                <div id="gproxy_prompt_cache_status" class="marginTop5"></div>
+            </div>
+
+            <div class="flex-container flexGap5 marginTop10">
+                <div id="gproxy_prompt_cache_refresh" class="menu_button menu_button_icon">
+                    <i class="fa-solid fa-rotate"></i>
+                    <small>Refresh</small>
+                </div>
+                <div id="gproxy_prompt_cache_restore" class="menu_button menu_button_icon">
+                    <i class="fa-solid fa-rotate-left"></i>
+                    <small>Defaults</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
