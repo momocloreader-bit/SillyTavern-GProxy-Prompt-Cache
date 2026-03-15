@@ -1,12 +1,14 @@
-import { eventSource, event_types, saveSettingsDebounced } from '../../../script.js';
-import { extension_settings, getContext, renderExtensionTemplateAsync } from '../../extensions.js';
-import { SlashCommand } from '../../slash-commands/SlashCommand.js';
-import { ARGUMENT_TYPE, SlashCommandNamedArgument } from '../../slash-commands/SlashCommandArgument.js';
-import { SlashCommandParser } from '../../slash-commands/SlashCommandParser.js';
-import { isTrueBoolean } from '../../utils.js';
+import { eventSource, event_types, saveSettingsDebounced } from '/script.js';
+import { extension_settings, getContext, renderExtensionTemplateAsync } from '/scripts/extensions.js';
+import { SlashCommand } from '/scripts/slash-commands/SlashCommand.js';
+import { ARGUMENT_TYPE, SlashCommandNamedArgument } from '/scripts/slash-commands/SlashCommandArgument.js';
+import { SlashCommandParser } from '/scripts/slash-commands/SlashCommandParser.js';
+import { isTrueBoolean } from '/scripts/utils.js';
 
-const MODULE_NAME = 'gproxy-prompt-cache';
 const SETTINGS_KEY = 'gproxyPromptCache';
+const MODULE_NAME = new URL('.', import.meta.url).pathname
+    .replace(/^\/scripts\/extensions\//, '')
+    .replace(/\/$/, '');
 
 const MAGIC_TRIGGERS = Object.freeze({
     auto: 'GPROXY_MAGIC_STRING_TRIGGER_CACHING_CREATE_7D9ASD7A98SD7A9S8D79ASC98A7FNKJBVV80SCMSHDSIUCH',
