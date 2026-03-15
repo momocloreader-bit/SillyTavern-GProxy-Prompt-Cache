@@ -20,7 +20,15 @@ const DEFAULT_SETTINGS = Object.freeze({
     enabled: true,
     trigger: '1h',
     summaryTitle: '摘要',
+    bodyLayerBase: 10,
 });
+
+function normalizeBodyLayerBase(value) {
+    const parsedValue = Number.parseInt(String(value ?? ''), 10);
+    return Number.isInteger(parsedValue) && parsedValue > 0
+        ? parsedValue
+        : DEFAULT_SETTINGS.bodyLayerBase;
+}
 
 function getSettings() {
     if (!extension_settings[SETTINGS_KEY] || typeof extension_settings[SETTINGS_KEY] !== 'object') {
@@ -40,6 +48,7 @@ function getSettings() {
 
     const summaryTitle = String(extension_settings[SETTINGS_KEY].summaryTitle || '').trim();
     extension_settings[SETTINGS_KEY].summaryTitle = summaryTitle || DEFAULT_SETTINGS.summaryTitle;
+    extension_settings[SETTINGS_KEY].bodyLayerBase = normalizeBodyLayerBase(extension_settings[SETTINGS_KEY].bodyLayerBase);
 
     return extension_settings[SETTINGS_KEY];
 }
@@ -156,16 +165,18 @@ function findManagedTextTarget(message, summaryPattern) {
     return null;
 }
 
-function computeBoundary(totalManagedMessages) {
-    if (totalManagedMessages < 20) {
+function computeBoundary(totalManagedMessages, bodyLayerBase) {
+    const normalizedBodyLayerBase = normalizeBodyLayerBase(bodyLayerBase);
+    if (totalManagedMessages < normalizedBodyLayerBase * 2) {
         return 0;
     }
 
-    return Math.floor(totalManagedMessages / 10) * 10 - 10;
+    return Math.floor(totalManagedMessages / normalizedBodyLayerBase) * normalizedBodyLayerBase - normalizedBodyLayerBase;
 }
 
-function analyzeChatMessages(messages, summaryTitle) {
+function analyzeChatMessages(messages, summaryTitle, bodyLayerBase) {
     const summaryPattern = createSummaryBlockRegex(summaryTitle);
+    const normalizedBodyLayerBase = normalizeBodyLayerBase(bodyLayerBase);
     let totalManagedMessages = 0;
 
     for (const message of messages) {
@@ -178,7 +189,7 @@ function analyzeChatMessages(messages, summaryTitle) {
         }
     }
 
-    const boundary = computeBoundary(totalManagedMessages);
+    const boundary = computeBoundary(totalManagedMessages, normalizedBodyLayerBase);
     const bodyStart = boundary + 1;
 
     return {
@@ -187,6 +198,7 @@ function analyzeChatMessages(messages, summaryTitle) {
         summaryCount: boundary,
         bodyCount: Math.max(totalManagedMessages - boundary, 0),
         bodyRange: totalManagedMessages > 0 ? `${bodyStart}-${totalManagedMessages}` : '0-0',
+        bodyLayerBase: normalizedBodyLayerBase,
     };
 }
 
@@ -202,6 +214,10 @@ function buildStatusText(stats) {
     return `Managed assistant messages: ${stats.totalManagedMessages}. Summary-only: ${stats.summaryCount} (1-${stats.boundary}). Body-only: ${stats.bodyCount} (${stats.bodyRange}).`;
 }
 
+function buildStatusLine(settings, stats) {
+    return `[${settings.enabled ? 'enabled' : 'disabled'}] ${buildStatusText(stats)} Trigger: ${settings.trigger}. x=${settings.bodyLayerBase}.`;
+}
+
 function updateStatus() {
     const statusElement = $('#gproxy_prompt_cache_status');
     if (!statusElement.length) {
@@ -210,10 +226,8 @@ function updateStatus() {
 
     const settings = getSettings();
     const context = getContext();
-    const stats = analyzeChatMessages(context.chat ?? [], settings.summaryTitle);
-    const enabledLabel = settings.enabled ? 'enabled' : 'disabled';
-    const triggerLabel = settings.trigger;
-    statusElement.text(`[${enabledLabel}] ${buildStatusText(stats)} Trigger: ${triggerLabel}.`);
+    const stats = analyzeChatMessages(context.chat ?? [], settings.summaryTitle, settings.bodyLayerBase);
+    statusElement.text(buildStatusLine(settings, stats));
 }
 
 function syncSettingsUi() {
@@ -221,6 +235,7 @@ function syncSettingsUi() {
     $('#gproxy_prompt_cache_enabled').prop('checked', !!settings.enabled);
     $('#gproxy_prompt_cache_trigger').val(settings.trigger);
     $('#gproxy_prompt_cache_summary_title').val(settings.summaryTitle);
+    $('#gproxy_prompt_cache_body_layer_base').val(settings.bodyLayerBase);
     updateStatus();
 }
 
@@ -253,7 +268,7 @@ function applyPromptRewrite(eventData) {
         });
     }
 
-    const boundary = computeBoundary(managedMessages.length);
+    const boundary = computeBoundary(managedMessages.length, settings.bodyLayerBase);
     const removeIndices = [];
 
     managedMessages.forEach((entry, offset) => {
@@ -288,8 +303,8 @@ function registerSlashCommands() {
         name: 'gproxycache-status',
         callback: () => {
             const settings = getSettings();
-            const stats = analyzeChatMessages(getContext().chat ?? [], settings.summaryTitle);
-            return `[${settings.enabled ? 'enabled' : 'disabled'}] ${buildStatusText(stats)} Trigger: ${settings.trigger}.`;
+            const stats = analyzeChatMessages(getContext().chat ?? [], settings.summaryTitle, settings.bodyLayerBase);
+            return buildStatusLine(settings, stats);
         },
         returns: 'current gproxy prompt cache status',
         helpString: 'Show current GProxy Prompt Cache status for the active chat.',
@@ -318,9 +333,14 @@ function registerSlashCommands() {
                 }
             }
 
+            const bodyLayerBaseArg = args.x !== undefined && args.x !== '' ? args.x : args.layers;
+            if (bodyLayerBaseArg !== undefined && bodyLayerBaseArg !== '') {
+                settings.bodyLayerBase = normalizeBodyLayerBase(bodyLayerBaseArg);
+            }
+
             syncSettingsUi();
             saveSettings();
-            return `[${settings.enabled ? 'enabled' : 'disabled'}] trigger=${settings.trigger} summary=${settings.summaryTitle}`;
+            return `[${settings.enabled ? 'enabled' : 'disabled'}] trigger=${settings.trigger} summary=${settings.summaryTitle} x=${settings.bodyLayerBase}`;
         },
         namedArgumentList: [
             SlashCommandNamedArgument.fromProps({
@@ -342,9 +362,21 @@ function registerSlashCommands() {
                 typeList: [ARGUMENT_TYPE.STRING],
                 defaultValue: '',
             }),
+            SlashCommandNamedArgument.fromProps({
+                name: 'layers',
+                description: 'body window base x; body text stays in the newest x to 2x-1 managed turns',
+                typeList: [ARGUMENT_TYPE.NUMBER, ARGUMENT_TYPE.STRING],
+                defaultValue: '',
+            }),
+            SlashCommandNamedArgument.fromProps({
+                name: 'x',
+                description: 'alias of layers',
+                typeList: [ARGUMENT_TYPE.NUMBER, ARGUMENT_TYPE.STRING],
+                defaultValue: '',
+            }),
         ],
         returns: 'updated gproxy prompt cache config',
-        helpString: 'Update GProxy Prompt Cache settings. Example: /gproxycache-set enabled=true trigger=1h summary=摘要',
+        helpString: 'Update GProxy Prompt Cache settings. Example: /gproxycache-set enabled=true trigger=1h summary=摘要 x=10',
     }));
 }
 
@@ -371,6 +403,13 @@ async function addSettingsUi() {
     $('#gproxy_prompt_cache_summary_title').on('input', () => {
         const value = String($('#gproxy_prompt_cache_summary_title').val()).trim();
         getSettings().summaryTitle = value || DEFAULT_SETTINGS.summaryTitle;
+        saveSettings();
+    });
+
+    $('#gproxy_prompt_cache_body_layer_base').on('change', () => {
+        const settings = getSettings();
+        settings.bodyLayerBase = normalizeBodyLayerBase($('#gproxy_prompt_cache_body_layer_base').val());
+        $('#gproxy_prompt_cache_body_layer_base').val(settings.bodyLayerBase);
         saveSettings();
     });
 

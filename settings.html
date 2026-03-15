@@ -25,11 +25,17 @@
             </div>
 
             <div class="marginTop10">
+                <label for="gproxy_prompt_cache_body_layer_base">Body window base (x)</label>
+                <input id="gproxy_prompt_cache_body_layer_base" class="text_pole" type="number" min="1" step="1" />
+            </div>
+
+            <div class="marginTop10">
                 <small>
                     Assistant messages containing a matching
                     <code>&lt;details&gt;&lt;summary&gt;...&lt;/summary&gt;&lt;/details&gt;</code>
                     block are split deterministically:
-                    after 20 managed assistant turns, the oldest 10 keep only the summary block; the newest turns keep only body text.
+                    after <code>2x</code> managed assistant turns, the oldest chunk of <code>x</code> becomes summary-only;
+                    the newest managed turns keep body text, so the body window stays between <code>x</code> and <code>2x-1</code> turns.
                 </small>
             </div>
 

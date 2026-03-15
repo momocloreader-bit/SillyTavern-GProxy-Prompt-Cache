@@ -8,16 +8,17 @@ SillyTavern extension for deterministic summary/body prompt splitting and GProxy
 - Skips Prompt Manager dry-runs
 - Recomputes managed assistant-message ranges on every real send
 - Detects assistant messages containing a matching `<details><summary>摘要</summary>...</details>` block
-- Keeps the newest managed turns as body-only, and turns older managed turns into summary-only blocks after the 20th managed turn
+- Lets you configure the body-window base `x` (default `10`)
+- Keeps the newest managed turns as body-only, and turns older managed turns into summary-only blocks after the `2x` managed turn
 - Appends the selected GProxy magic trigger to:
   - the summary boundary message
   - the latest managed assistant message
 
 Current split rule:
 
-- `1-19` managed assistant turns: all body-only
-- `20-29`: oldest `10` become summary-only
-- `30-39`: oldest `20` become summary-only
+- before `2x` managed assistant turns: all body-only
+- after that, the oldest chunks of `x` become summary-only
+- the newest managed turns keep body text, so the live body window stays between `x` and `2x-1` turns
 - and so on
 
 ## Install
@@ -60,7 +61,7 @@ It is not required for the core prompt rewrite, but it is useful for scripted co
 Available slash commands:
 
 - `/gproxycache-status`
-- `/gproxycache-set enabled=true trigger=1h summary=摘要`
+- `/gproxycache-set enabled=true trigger=1h summary=摘要 x=10`
 
 ## Files
 
