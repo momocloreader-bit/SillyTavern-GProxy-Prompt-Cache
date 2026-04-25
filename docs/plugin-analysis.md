@@ -6,7 +6,11 @@
 
 GProxy 是一个 Claude API 代理服务。Claude API 原生支持**提示词前缀缓存（Prompt Caching）**：在 API 请求中用 `cache_control` 标记某个位置，Claude 会将该标记之前的所有内容缓存下来。下次请求时，若该位置之前的内容字节完全一致，则命中缓存，读取价格约为正常输入 token 的 10%（写入时为 1.25x，但后续每次读取均为 0.1x）。
 
+> 参考：[Claude Prompt Caching 官方文档](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching)
+
 SillyTavern 本身无法直接在 API 请求里插入 `cache_control` 参数。GProxy 的解决方案是：在消息文本里识别特定的**魔法字符串（Magic Trigger）**，代理层将其转换为正式的 `cache_control` API 参数。本插件的核心工作，就是在每次发送请求前，自动将这些魔法字符串插入到正确的位置。
+
+> 插件源码：[LeenHawk/SillyTavern-GProxy-Prompt-Cache](https://github.com/LeenHawk/SillyTavern-GProxy-Prompt-Cache)
 
 ### 插件的运作方式
 
@@ -208,3 +212,12 @@ SillyTavern 的 prompt 默认结构是：
 | 绿灯词条破坏 T① | 每次词条变化即失效 | 完全隔离，不影响 |
 | 使用缓存断点数 | 2/4 | 3/4 |
 | 每 batch 重建次数 | T①：1次，T②：每轮 | T①②：各 1 次 |
+
+---
+
+## 参考资料
+
+- [Claude Prompt Caching 官方文档](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching) — 缓存机制、计费结构、断点数量上限
+- [插件源码：LeenHawk/SillyTavern-GProxy-Prompt-Cache](https://github.com/LeenHawk/SillyTavern-GProxy-Prompt-Cache) — 原始实现，本文分析基于此版本
+- [SillyTavern World Info 文档](https://docs.sillytavern.app/usage/core-concepts/worldinfo/) — 世界书词条的 Position 选项与 Outlet 机制
+- [SillyTavern Prompt Manager 文档](https://docs.sillytavern.app/usage/prompts/prompt-manager/) — 预设块的排列与宏支持

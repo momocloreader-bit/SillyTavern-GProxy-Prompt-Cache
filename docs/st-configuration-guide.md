@@ -27,6 +27,8 @@ GProxy Prompt Cache 插件的缓存断点（T①、T②）都位于聊天历史�
 
 SillyTavern 的世界书词条有一个特殊的 Position 选项：**Outlet**。
 
+> 参考：[SillyTavern World Info 文档](https://docs.sillytavern.app/usage/core-concepts/worldinfo/)
+
 - 设为 Outlet 的词条**不会被自动注入**到 prompt 的任何位置
 - 需要在 Prompt Manager（预设）里用宏 `{{outlet::名称}}` 手动指定落点
 - 宏所在的位置就是这些词条内容最终出现的位置
@@ -37,6 +39,8 @@ SillyTavern 的世界书词条有一个特殊的 Position 选项：**Outlet**。
 ---
 
 ## 三、Prompt Manager 配置
+
+> 参考：[SillyTavern Prompt Manager 文档](https://docs.sillytavern.app/usage/prompts/prompt-manager/)
 
 ### 第一步：新建"Dynamic World Info"提示块
 
@@ -141,3 +145,12 @@ Prompt Manager
   ☐ Always On 词条保持不变
   ☐ 开局固定触发词条保持不变
 ```
+
+---
+
+## 参考资料
+
+- [SillyTavern World Info 文档](https://docs.sillytavern.app/usage/core-concepts/worldinfo/) — Position 选项完整列表、Outlet 用法说明
+- [SillyTavern Prompt Manager 文档](https://docs.sillytavern.app/usage/prompts/prompt-manager/) — 预设块的新建、排序与宏语法
+- [SillyTavern Macros 文档](https://docs.sillytavern.app/usage/core-concepts/macros/) — `{{outlet::名称}}` 宏的完整说明
+- [Claude Prompt Caching 官方文档](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching) — 理解为何需要将动态内容移至断点之后
